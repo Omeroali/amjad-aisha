@@ -10,30 +10,22 @@ export default function Guestbook() {
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   //const handleSubmit = (e: React.FormEvent) => {
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !message.trim()) return;
+ const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!name.trim() || !message.trim()) return;
 
-    setIsSubmitting(true);
-//    setTimeout(() => {
-//      saveMessage(name, message);
-//      setName("");
-//      setMessage("");
-//      setIsSubmitting(false);
- //     setIsSubmitted(true);
- //   }, 600);
- try {
-  await saveMessage(name, message);
-
+  // إظهار النجاح مباشرة بدون انتظار Supabase
   setName("");
   setMessage("");
   setIsSubmitting(false);
   setIsSubmitted(true);
-} catch (error) {
-  console.error("Failed to send guestbook message:", error);
-  setIsSubmitting(false);
-}
-  };
+
+  // حفظ التهنئة في الخلفية
+  void saveMessage(name, message).catch((error) => {
+    console.error("Failed to save guestbook message in background:", error);
+  });
+};
+
 
   const handleSendAnother = () => {
     setIsSubmitted(false);
