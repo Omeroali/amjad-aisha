@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import type { Session } from "@supabase/supabase-js";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   BookHeart, ChevronLeft, ChevronRight, BookOpen, Heart, 
@@ -6,11 +8,20 @@ import {
   Search, Trash2, ArrowRight, Sparkles, Filter
 } from "lucide-react";
 import { getMessages, formatArabicDate } from "../utils/guestbookStorage";
+import { supabase } from "../lib/supabase";
 import type { GuestMessage } from "../utils/guestbookStorage";
 import { getRSVPs, deleteRSVP, exportRSVPsToCSV, getRSVPSummary, type RSVPEntry } from "../utils/rsvpStorage";
 
 export default function PrivateGuestbook() {
   const [activeTab, setActiveTab] = useState<"rsvp" | "book">("rsvp");
+  
+    // Authentication State
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   
   // RSVP State
   const [rsvps, setRsvps] = useState<RSVPEntry[]>([]);
@@ -25,19 +36,120 @@ export default function PrivateGuestbook() {
 
   const totalPages = messages.length + 2; // cover + messages + back cover
 
-  const loadData = useCallback(() => {
-    setMessages(getMessages());
-    setRsvps(getRSVPs());
-  }, []);
 
-  useEffect(() => {
-    loadData();
 
-    // Listen to cross-tab storage events
-    const handleStorage = () => loadData();
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, [loadData]);
+ const loadData = useCallback(async () => {
+  try {
+    const [guestbookMessages, rsvpEntries] = await Promise.all([
+      getMessages(),
+      getRSVPs(),
+    ]);
+
+    setMessages(guestbookMessages);
+    setRsvps(rsvpEntries);
+  } catch (error) {
+    console.error("Failed to load dashboard data:", error);
+  }
+}, []);
+
+
+
+useEffect(() => {
+  let mounted = true;
+
+  const initializeAuth = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!mounted) return;
+
+    setSession(session);
+    setAuthLoading(false);
+
+    if (session) {
+      loadData();
+    }
+  };
+
+  initializeAuth();
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (!mounted) return;
+
+    setSession(session);
+
+    if (session) {
+      loadData();
+    } else {
+      setMessages([]);
+      setRsvps([]);
+    }
+  });
+
+  return () => {
+    mounted = false;
+    subscription.unsubscribe();
+  };
+}, [loadData]);
+
+useEffect(() => {
+  if (!session) return;
+
+  const channel = supabase
+    .channel("rsvp-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "rsvps",
+      },
+      () => {
+        loadData();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [session, loadData]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email.trim() || !password) {
+      setLoginError("أدخل البريد الإلكتروني وكلمة المرور.");
+      return;
+    }
+
+    setIsLoggingIn(true);
+    setLoginError("");
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (error) {
+      console.error("Login failed:", error);
+      setLoginError("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
+      setIsLoggingIn(false);
+      return;
+    }
+
+    setPassword("");
+    setIsLoggingIn(false);
+  };
+
+
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+  window.location.hash = "#/";
+};
 
   // Statistics calculation
   const stats = useMemo(() => {
@@ -60,12 +172,10 @@ export default function PrivateGuestbook() {
     );
   }, [rsvps, searchQuery]);
 
-  const handleDeleteRSVP = (id: string) => {
-    if (window.confirm("هل أنت متأكد من حذف هذا التأكيد؟")) {
-      deleteRSVP(id);
-      loadData();
-    }
-  };
+ // const handleDeleteRSVP = (id: string) => {
+   // if (window.confirm("هل أنت متأكد من حذف هذا التأكيد؟")) {
+  //    deleteRSVP(id);
+  //    loadData();/  }/  };
 
   const handleCopyList = () => {
     const lines = [
@@ -192,7 +302,7 @@ export default function PrivateGuestbook() {
               </p>
               <div className="w-20 sm:w-24 h-[1px] bg-brand-accent/60 mx-auto mt-4 sm:mt-6 mb-3 sm:mb-4" />
               <p className="font-sans text-[10px] sm:text-xs text-brand-secondary tracking-[0.3em] uppercase font-bold" dir="ltr">
-                16 October 2026
+                15 October 2026
               </p>
             </motion.div>
 
@@ -316,6 +426,120 @@ export default function PrivateGuestbook() {
     );
   };
 
+    if (authLoading) {
+    return (
+      <div
+        className="min-h-screen bg-brand-bg flex items-center justify-center px-4"
+        dir="rtl"
+      >
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+            className="w-10 h-10 border-2 border-brand-accent/30 border-t-brand-accent rounded-full mx-auto mb-4"
+          />
+          <p className="font-arabic text-sm text-brand-secondary">
+            جاري التحقق من الدخول...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div
+        className="min-h-screen bg-brand-bg flex items-center justify-center px-4"
+        dir="rtl"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          <div className="bg-white/90 backdrop-blur-md border border-brand-border/60 rounded-3xl p-6 sm:p-8 shadow-lg">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 rounded-full bg-brand-accent/10 border border-brand-accent/30 flex items-center justify-center mx-auto mb-4">
+                <BookHeart
+                  size={30}
+                  className="text-brand-accent"
+                  strokeWidth={1.2}
+                />
+              </div>
+
+              <h1 className="font-calligraphy text-3xl sm:text-4xl text-brand-primary mb-2">
+                دفتر التهاني
+              </h1>
+
+              <p className="font-arabic text-sm text-brand-secondary">
+                الدخول إلى لوحة التحكم الخاصة
+              </p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block font-arabic text-xs font-bold text-brand-secondary mb-1.5">
+                  البريد الإلكتروني
+                </label>
+
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="أدخل البريد الإلكتروني"
+                  autoComplete="email"
+                  className="w-full px-4 py-3 bg-white border border-brand-border/60 rounded-xl font-sans text-sm text-brand-primary placeholder:text-brand-secondary/50 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block font-arabic text-xs font-bold text-brand-secondary mb-1.5">
+                  كلمة المرور
+                </label>
+
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="أدخل كلمة المرور"
+                  autoComplete="current-password"
+                  className="w-full px-4 py-3 bg-white border border-brand-border/60 rounded-xl font-sans text-sm text-brand-primary placeholder:text-brand-secondary/50 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 transition-all"
+                />
+              </div>
+
+              {loginError && (
+                <div className="bg-rose-50 border border-rose-200 rounded-xl px-4 py-3 text-center">
+                  <p className="font-arabic text-xs text-rose-600">
+                    {loginError}
+                  </p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoggingIn}
+                className="w-full py-3.5 bg-brand-primary text-white rounded-xl font-arabic text-sm font-bold hover:bg-brand-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border-none"
+              >
+                {isLoggingIn ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+            <button
+  type="button"
+  onClick={handleLogout}
+  className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 border border-brand-border/60 rounded-full font-arabic text-xs sm:text-sm text-brand-primary hover:bg-brand-accent hover:text-white hover:border-brand-accent transition-all duration-300 shadow-xs cursor-pointer"
+>
+  <ArrowRight size={16} />
+  <span>العودة لصفحة الدعوة</span>
+</button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-brand-bg flex flex-col items-center py-6 sm:py-10 px-3 sm:px-6 relative overflow-x-hidden">
       {/* Ambient background */}
@@ -513,16 +737,7 @@ export default function PrivateGuestbook() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-brand-border/30">
-                    <button
-                      onClick={() => handleDeleteRSVP(entry.id)}
-                      className="p-2 rounded-xl text-brand-secondary/60 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer border-none bg-transparent"
-                      title="حذف من الكشف"
-                      aria-label="حذف"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+
                 </motion.div>
               ))
             )}

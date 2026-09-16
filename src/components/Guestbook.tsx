@@ -9,18 +9,30 @@ export default function Guestbook() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  //const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !message.trim()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      saveMessage(name, message);
-      setName("");
-      setMessage("");
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-    }, 600);
+//    setTimeout(() => {
+//      saveMessage(name, message);
+//      setName("");
+//      setMessage("");
+//      setIsSubmitting(false);
+ //     setIsSubmitted(true);
+ //   }, 600);
+ try {
+  await saveMessage(name, message);
+
+  setName("");
+  setMessage("");
+  setIsSubmitting(false);
+  setIsSubmitted(true);
+} catch (error) {
+  console.error("Failed to send guestbook message:", error);
+  setIsSubmitting(false);
+}
   };
 
   const handleSendAnother = () => {

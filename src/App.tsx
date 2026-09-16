@@ -5,6 +5,7 @@ import Invitation from "./components/Invitation";
 import AudioPlayer from "./components/AudioPlayer";
 import ringsBg from "./assets/rings.png";
 import musicTrack from "./assets/el-leil-we-samah.mpeg";
+import { supabase } from "./lib/supabase";
 
 export default function App() {
   const [isOpened, setIsOpened] = useState(false);
@@ -29,10 +30,25 @@ export default function App() {
     setIsPlaying(!isPlaying);
   };
 
-  useEffect(() => {
-    // Add smooth scrolling to html
-    document.documentElement.style.scrollBehavior = "smooth";
-  }, []);
+useEffect(() => {
+  document.documentElement.style.scrollBehavior = "smooth";
+
+  const testSupabaseConnection = async () => {
+    const { error } = await supabase
+      .from("guestbook_messages")
+      .select("id")
+      .limit(1);
+
+    if (error) {
+      console.error("Supabase connection failed:", error);
+      return;
+    }
+
+    console.log("Supabase connection successful.");
+  };
+
+  testSupabaseConnection();
+}, []);
 
   return (
    // <main 

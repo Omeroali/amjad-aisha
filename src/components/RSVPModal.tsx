@@ -24,24 +24,34 @@ export default function RSVPModal({ isOpen, onClose }: RSVPModalProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name.trim()) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    setIsSubmitting(true);
-    setTimeout(() => {
-      // Save real RSVP entry
-      saveRSVP(formData.name, formData.guests, formData.message);
+  if (!formData.name.trim()) return;
 
-      // Also save to guestbook if message is written
-      if (formData.message.trim()) {
-        saveMessage(formData.name, formData.message);
-      }
+  setIsSubmitting(true);
 
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-    }, 600);
-  };
+  try {
+    await saveRSVP(
+      formData.name,
+      formData.guests,
+      formData.message
+    );
+
+    if (formData.message.trim()) {
+      await saveMessage(
+        formData.name,
+        formData.message
+      );
+    }
+
+    setIsSubmitting(false);
+    setIsSubmitted(true);
+  } catch (error) {
+    console.error("Failed to submit RSVP:", error);
+    setIsSubmitting(false);
+  }
+};
 
   const handleClose = () => {
     onClose();

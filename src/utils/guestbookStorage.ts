@@ -1,43 +1,76 @@
+import { supabase } from "../lib/supabase";
+
 export interface GuestMessage {
   id: string;
   name: string;
   message: string;
-  timestamp: string; // ISO string for JSON serialization
+  timestamp: string;
 }
 
-const STORAGE_KEY = "engagement_guestbook_messages";
+export async function saveMessage(
+  name: string,
+  message: string
+): Promise<GuestMessage> {
+  const cleanName = name.trim();
+  const cleanMessage = message.trim();
 
-export function saveMessage(name: string, message: string): GuestMessage {
-  const newMessage: GuestMessage = {
-    id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name: name.trim(),
-    message: message.trim(),
+  const { error } = await supabase
+    .from("guestbook_messages")
+    .insert({
+      name: cleanName,
+      message: cleanMessage,
+    });
+
+  if (error) {
+    console.error("Failed to save guestbook message:", error);
+    throw error;
+  }
+
+  return {
+    id: `msg-${Date.now()}`,
+    name: cleanName,
+    message: cleanMessage,
     timestamp: new Date().toISOString(),
   };
-
-  const existing = getMessages();
-  existing.unshift(newMessage);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-
-  return newMessage;
 }
 
-export function getMessages(): GuestMessage[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as GuestMessage[];
-  } catch {
-    return [];
+export async function getMessages(): Promise<GuestMessage[]> {
+  const { data, error } = await supabase
+    .from("guestbook_messages")
+    .select("id, name, message, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Failed to load guestbook messages:", error);
+    throw error;
   }
+
+  return (data ?? []).map((row) => ({
+    id: String(row.id),
+    name: row.name,
+    message: row.message,
+    timestamp: row.created_at,
+  }));
 }
 
 export function formatArabicDate(isoString: string): string {
   const date = new Date(isoString);
+
   const months = [
-    "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
-    "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+    "يناير",
+    "فبراير",
+    "مارس",
+    "أبريل",
+    "مايو",
+    "يونيو",
+    "يوليو",
+    "أغسطس",
+    "سبتمبر",
+    "أكتوبر",
+    "نوفمبر",
+    "ديسمبر",
   ];
+
   const day = date.getDate();
   const month = months[date.getMonth()];
   const year = date.getFullYear();
