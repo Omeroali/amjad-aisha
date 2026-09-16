@@ -22,12 +22,14 @@ function generateICSFile(): void {
   const icsContent = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Rashad & Esraa//Engagement//EN",
+    "PRODID:-//Amjad & Aisha//Wedding//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
-    "DTSTART:20260925T190000",
-    "DTEND:20260926T010000",
+    "UID:amjad-aisha-wedding-20261015@amjad-aisha",
+    "DTSTAMP:20260916T000000Z",
+    "DTSTART;TZID=Asia/Riyadh:20261015T200000",
+    "DTEND;TZID=Asia/Riyadh:20261016T020000",
     "SUMMARY:💍 زفاف أمجد و عائشة",
     "DESCRIPTION:حفل زفاف أمجد و عائشة - قاعة الماسة البيضاء",
     "LOCATION:قاعة الماسة البيضاء",
@@ -41,17 +43,22 @@ function generateICSFile(): void {
     "END:VCALENDAR",
   ].join("\r\n");
 
-  const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+  const blob = new Blob([icsContent], {
+    type: "text/calendar;charset=utf-8",
+  });
+
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
+
   link.href = url;
-  link.download = "rashad-esraa-engagement.ics";
+  link.download = "amjad-aisha-wedding.ics";
+
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+
   URL.revokeObjectURL(url);
 }
-
 export default function InteractiveCalendar() {
   const [currentMonth, setCurrentMonth] = useState(8); // September (0-indexed)
   const [currentYear, setCurrentYear] = useState(2026);
