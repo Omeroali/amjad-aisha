@@ -218,7 +218,7 @@ export default function Invitation() {
         leading-relaxed
       "
     >
-      آل عبدالسميع عامر عبدالعزيز
+      آل عبد السميع عامر الجعفري
     </div>
 
     {/* Decorative bottom */}
@@ -330,7 +330,7 @@ export default function Invitation() {
         tracking-tight
       "
     >
-      أمجد
+      م. أمجد
     </h1>
 
     {/* & */}
@@ -381,7 +381,7 @@ export default function Invitation() {
         tracking-tight
       "
     >
-      عائشة
+      د. عائشة
     </h1>
 
     {/* Bottom decoration */}
@@ -487,7 +487,7 @@ export default function Invitation() {
           </div>
 
           <p className="font-arabic text-lg sm:text-2xl text-brand-primary font-medium mb-8 leading-relaxed max-w-lg px-4">
-            بكل الحب ننتظركم لتشاركونا فرحتنا يوم الجمعة 15 اكتوبر 2026
+            بكل الحب ننتظركم لتشاركونا فرحتنا يوم الخميس 15 اكتوبر 2026
             <br />
             في قاعة الماسة البيضاء.
           </p>
@@ -618,7 +618,7 @@ export default function Invitation() {
         text-brand-accent
       "
     >
-      الجمعة 15 اكتوبر 2026
+      الخميس 15 اكتوبر 2026
       <br />
       الساعة 8:00 مساءً
     </span>

@@ -275,7 +275,7 @@ export default function Cover({ onOpen }: CoverProps) {
                 z-10
               "
             >
-              أمجد
+              م.أمجد
             </motion.span>
 
             {/* & */}
@@ -332,7 +332,7 @@ export default function Cover({ onOpen }: CoverProps) {
                 z-10
               "
             >
-              عائشة
+              د.عائشة
               <br />
               <br />
               <br />
