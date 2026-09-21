@@ -577,52 +577,81 @@ export default function Invitation() {
 
   {/* Time */}
   <div
+  className="
+    inline-flex
+    flex-col
+    items-center
+    justify-center
+    mt-5
+    sm:mt-6
+    px-7
+    sm:px-10
+    py-3
+    sm:py-4
+    rounded-2xl
+    border
+    border-brand-accent/30
+    bg-white/40
+    backdrop-blur-sm
+    shadow-sm
+  "
+>
+  <span
     className="
-      inline-flex
-      flex-col
-      items-center
-      justify-center
-      mt-5
-      sm:mt-6
-      px-7
-      sm:px-10
-      py-3
-      sm:py-4
-      rounded-2xl
-      border
-      border-brand-accent/30
-      bg-white/40
-      backdrop-blur-sm
-      shadow-sm
+      font-arabic
+      text-sm
+      sm:text-base
+      text-brand-secondary
+      mb-1
     "
   >
-    <span
-      className="
-        font-arabic
-        text-sm
-        sm:text-base
-        text-brand-secondary
-        mb-1
-      "
-    >
-      موعد استقبالكم
-    </span>
+    موعد استقبالكم
+  </span>
 
-    <span
-      className="
-        font-arabic
-        text-2xl
-        sm:text-3xl
-        md:text-4xl
-        font-bold
-        text-brand-accent
-      "
-    >
-      الخميس 15 اكتوبر 2026
-      <br />
-      الساعة 8:00 مساءً
-    </span>
-  </div>
+  <span
+    className="
+      font-arabic
+      text-2xl
+      sm:text-3xl
+      md:text-4xl
+      font-bold
+      text-brand-accent
+    "
+  >
+    الخميس 15 أكتوبر 2026
+    <br />
+    الساعة 8:00 مساءً
+  </span>
+
+  {/* الفاصل */}
+  <div
+    className="
+      w-12
+      sm:w-16
+      h-px
+      bg-brand-accent/25
+      my-3
+      sm:my-4
+    "
+  />
+
+  {/* الأمنية */}
+  <span
+    className="
+      font-arabic
+      text-base
+      sm:text-lg
+      md:text-xl
+      text-brand-primary
+      font-bold
+      leading-relaxed
+      text-center
+    "
+    dir="rtl"
+  >
+أمنياتنا لأطفالكم أحلامًا سعيدة
+  </span>
+</div>
 
   {/* Decorative bottom */}
   <div className="flex items-center justify-center gap-3 mt-5 sm:mt-6">
