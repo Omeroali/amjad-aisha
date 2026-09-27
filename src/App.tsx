@@ -15,6 +15,7 @@ export default function App() {
   const handleOpen = () => {
     setIsOpened(true);
     setIsPlaying(true);
+
     if (audioRef.current) {
       audioRef.current.play().catch(console.error);
     }
@@ -22,60 +23,81 @@ export default function App() {
 
   const toggleAudio = () => {
     if (!audioRef.current) return;
+
     if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
     } else {
       audioRef.current.play().catch(console.error);
+      setIsPlaying(true);
     }
-    setIsPlaying(!isPlaying);
   };
 
-useEffect(() => {
-  document.documentElement.style.scrollBehavior = "smooth";
+  // إيقاف حالة التشغيل عند انتهاء الأغنية
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
 
-  const testSupabaseConnection = async () => {
-    const { error } = await supabase
-      .from("guestbook_messages")
-      .select("id")
-      .limit(1);
+    const handleEnded = () => {
+      setIsPlaying(false);
+    };
 
-    if (error) {
-      console.error("Supabase connection failed:", error);
-      return;
-    }
+    audio.addEventListener("ended", handleEnded);
 
-    console.log("Supabase connection successful.");
-  };
+    return () => {
+      audio.removeEventListener("ended", handleEnded);
+    };
+  }, []);
 
-  testSupabaseConnection();
-}, []);
+  // اختبار اتصال Supabase
+  useEffect(() => {
+    document.documentElement.style.scrollBehavior = "smooth";
+
+    const testSupabaseConnection = async () => {
+      const { error } = await supabase
+        .from("guestbook_messages")
+        .select("id")
+        .limit(1);
+
+      if (error) {
+        console.error("Supabase connection failed:", error);
+        return;
+      }
+
+      console.log("Supabase connection successful.");
+    };
+
+    testSupabaseConnection();
+  }, []);
 
   return (
-   // <main 
-     // className="relative min-h-screen font-serif text-brand-primary selection:bg-brand-accent selection:text-brand-bg bg-cover bg-center bg-no-repeat bg-fixed"
-     // style={{ backgroundImage: `linear-gradient(rgba(252, 249, 245, 0.60), rgba(252, 249, 245, 0.60)), url('${ringsBg}')` }}
-    //>
     <main
-  className="relative min-h-screen font-serif text-brand-primary selection:bg-brand-accent selection:text-brand-bg bg-no-repeat bg-fixed"
-  style={{
-    backgroundImage: `url(${ringsBg})`,
-    backgroundSize: "100% 100%",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-  }}
->
-      <audio ref={audioRef} loop>
+      className="relative min-h-screen font-serif text-brand-primary selection:bg-brand-accent selection:text-brand-bg bg-no-repeat bg-fixed"
+      style={{
+        backgroundImage: `url(${ringsBg})`,
+        backgroundSize: "100% 100%",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      {/* Music */}
+      <audio ref={audioRef}>
         <source src={musicTrack} type="audio/mpeg" />
       </audio>
-      
+
       <AnimatePresence>
         {!isOpened && <Cover key="cover" onOpen={handleOpen} />}
       </AnimatePresence>
-      
+
       {isOpened && (
         <>
           <Invitation />
-          <AudioPlayer isPlaying={isPlaying} onToggle={toggleAudio} audioRef={audioRef} />
+
+          <AudioPlayer
+            isPlaying={isPlaying}
+            onToggle={toggleAudio}
+            audioRef={audioRef}
+          />
         </>
       )}
     </main>
